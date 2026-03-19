@@ -12,6 +12,17 @@ import { CommunitiesAPI } from '../api/communities';
 import { Community } from '../types/community';
 import { useInitialAnimation } from '../hooks/useAnimation';
 
+const getBadgeProps = (tag: string) => {
+  switch (tag) {
+    case "Guardiões do Território": return { icon: "shield", text: "Comunidade essencial na proteção e conservação ativa do bioma local.", variant: "earth" as const };
+    case "Extração Sustentável": return { icon: "leaf", text: "A coleta e produção respeitam os ciclos naturais biológicos da floresta.", variant: "green" as const };
+    case "Ancestralidade": return { icon: "clock", text: "Saberes passados por gerações que mantêm a cultura originária viva.", variant: "yellow" as const };
+    case "Área Protegida": return { icon: "map", text: "Território demarcado e legalmente protegido por sistemas de defesa.", variant: "earth" as const };
+    case "Manejo Comunitário": return { icon: "users", text: "Decisões e lucros são compartilhados de forma justa entre as famílias.", variant: "green" as const };
+    default: return { icon: "check-circle", text: "Certificação ou tag reconhecida pelo Flavos BioMap.", variant: "yellow" as const };
+  }
+};
+
 type RouteProps = RouteProp<RootStackParamList, 'Community'>;
 
 export const CommunityScreen = () => {
@@ -83,12 +94,28 @@ export const CommunityScreen = () => {
               </Animated.View>
               
               <Animated.View style={s2Style}>
-                <InfoBadge 
-                  icon="shield" 
-                  title="Guardiões do Território" 
-                  text="Esta comunidade desempenha um papel fundamental na proteção do bioma local, mantendo a floresta em pé e preservando técnicas ancestrais de cultivo e extração."
-                  variant="earth"
-                />
+                {community.tags && community.tags.length > 0 ? (
+                  community.tags.map((tag, index) => {
+                    const props = getBadgeProps(tag);
+                    return (
+                      <View key={index} style={{ marginBottom: 16 }}>
+                        <InfoBadge 
+                          icon={props.icon as any} 
+                          title={tag} 
+                          text={props.text} 
+                          variant={props.variant} 
+                        />
+                      </View>
+                    );
+                  })
+                ) : (
+                  <InfoBadge 
+                    icon="shield" 
+                    title="Guardiões do Território" 
+                    text="Esta comunidade desempenha um papel fundamental na proteção do bioma local."
+                    variant="earth"
+                  />
+                )}
               </Animated.View>
 
               <Animated.View style={[styles.futureArea, s3Style]}>

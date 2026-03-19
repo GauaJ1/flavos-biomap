@@ -3,8 +3,9 @@ export interface Community {
   name: string;
   description: string;
   location_name: string;
+  latitude: number | null;
+  longitude: number | null;
   image_url: string;
-  latitude?: number;
-  longitude?: number;
+  tags?: string[];
   created_at: string;
 }
