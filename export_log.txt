@@ -1,0 +1,11 @@
+CommandError: It looks like you're trying to use web support but don't have the required
+dependencies installed.
+
+Please install react-native-web@~0.19.6, react-dom@18.2.0,
+@expo/metro-runtime@~3.1.3 by running:
+
+npx expo install react-native-web react-dom @expo/metro-runtime
+
+If you're not using web, please ensure you remove the "web" string from the
+platforms array in the project Expo config.
+

@@ -1,0 +1,7 @@
+Starting project at C:\Users\Usuario\Pictures\Flavos_BioMap\flavos-biomap
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Deseja finalizar o arquivo em lotes (S/N)? 
+^C
