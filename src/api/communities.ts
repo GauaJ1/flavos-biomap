@@ -20,6 +20,7 @@ export const CommunitiesAPI = {
       latitude: item.latitude,
       longitude: item.longitude,
       image_url: item.image_url,
+      tags: item.tags || [],
       created_at: item.created_at,
     }));
   },
@@ -44,6 +45,7 @@ export const CommunitiesAPI = {
       latitude: data.latitude,
       longitude: data.longitude,
       image_url: data.image_url,
+      tags: data.tags || [],
       created_at: data.created_at,
     };
   }
