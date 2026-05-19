@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, useAnimatedScrollHandler, interpolate, Extrapolate } from 'react-native-reanimated';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/types';
 import { COLORS, SPACING, SHADOWS } from '../constants/colors';
@@ -11,10 +12,11 @@ import { OriginMap } from '../components/map/OriginMap';
 import { CommunitiesAPI } from '../api/communities';
 import { Community } from '../types/community';
 import { useInitialAnimation } from '../hooks/useAnimation';
+import { AppButton } from '../components/ui/AppButton';
 
 const getBadgeProps = (tag: string) => {
   switch (tag) {
-    case "Guardiões do Território": return { icon: "shield", text: "Comunidade essencial na proteção e conservação ativa do bioma local.", variant: "earth" as const };
+    case "Guardiões do Território": return { icon: "shield", text: "Comunidade essencial na proteção e conservação activa do bioma local.", variant: "earth" as const };
     case "Extração Sustentável": return { icon: "leaf", text: "A coleta e produção respeitam os ciclos naturais biológicos da floresta.", variant: "green" as const };
     case "Ancestralidade": return { icon: "clock", text: "Saberes passados por gerações que mantêm a cultura originária viva.", variant: "yellow" as const };
     case "Área Protegida": return { icon: "map", text: "Território demarcado e legalmente protegido por sistemas de defesa.", variant: "earth" as const };
@@ -27,6 +29,7 @@ type RouteProps = RouteProp<RootStackParamList, 'Community'>;
 
 export const CommunityScreen = () => {
   const route = useRoute<RouteProps>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Community'>>();
   const { communityId } = route.params;
 
   const [community, setCommunity] = React.useState<Community | null>(null);
@@ -68,9 +71,18 @@ export const CommunityScreen = () => {
         scrollEventThrottle={16}
         contentContainerStyle={styles.container}
       >
-        {loading || !community ? (
+        {loading ? (
           <View style={styles.loadingContainer}>
              <Text style={styles.loadingText}>Carregando comunidade da sociobiodiversidade...</Text>
+          </View>
+        ) : !community ? (
+          <View style={styles.loadingContainer}>
+             <Feather name="alert-circle" size={48} color={COLORS.secondary} style={{ marginBottom: 16 }} />
+             <Text style={[styles.loadingText, { color: COLORS.primary, fontSize: 18, fontWeight: '700' }]}>Comunidade não encontrada!</Text>
+             <Text style={[styles.loadingText, { textAlign: 'center', marginHorizontal: 32, marginBottom: 24 }]}>
+               Esta comunidade não está cadastrada ou foi removida do banco de dados.
+             </Text>
+             <AppButton title="Voltar" onPress={() => navigation.goBack()} />
           </View>
         ) : (
           <>

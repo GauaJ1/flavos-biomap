@@ -38,9 +38,20 @@ export const QRScanner = () => {
     if (scanned) return;
     setScanned(true);
     let productSlug = data;
+    
+    // Suporte para URLs completas escaneadas (ex: http://link.com/product/slug ou /product/slug)
     if (data.includes('product/')) {
-      productSlug = data.split('product/')[1];
+      const parts = data.split('product/');
+      productSlug = parts[parts.length - 1];
     }
+    
+    // Limpeza de parâmetros de URL (?foo=bar), hashes (#topo) e barras finais (/)
+    productSlug = productSlug.split('?')[0].split('#')[0];
+    if (productSlug.endsWith('/')) {
+      productSlug = productSlug.slice(0, -1);
+    }
+    productSlug = productSlug.split('/')[0];
+
     navigation.replace('ProductDetails', { productSlug });
   };
 
@@ -50,7 +61,7 @@ export const QRScanner = () => {
     }
   };
 
-  if (Platform.OS !== 'web' && !permission) {
+  if (!showManual && !permission) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.text}>Verificando permissão da câmera...</Text>
@@ -58,7 +69,7 @@ export const QRScanner = () => {
     );
   }
 
-  if (Platform.OS !== 'web' && !permission?.granted) {
+  if (!showManual && !permission?.granted) {
     return (
       <View style={styles.centerContainer}>
         <View style={styles.iconCircle}>
@@ -74,7 +85,7 @@ export const QRScanner = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      {!showManual && Platform.OS !== 'web' ? (
+      {!showManual ? (
         <>
           <CameraView
             style={StyleSheet.absoluteFillObject}
@@ -117,12 +128,12 @@ export const QRScanner = () => {
         </>
       ) : (
         <View style={styles.manualContainer}>
-          {Platform.OS !== 'web' && (
-            <TouchableOpacity onPress={() => setShowManual(false)} style={styles.manualClose}>
-              <Feather name="camera" size={20} color={COLORS.primary} />
-              <Text style={styles.manualCloseText}>Voltar para câmera</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => setShowManual(false)} style={styles.manualClose}>
+            <Feather name="camera" size={20} color={COLORS.primary} />
+            <Text style={styles.manualCloseText}>
+              {Platform.OS === 'web' ? 'Escanear com a Câmera' : 'Voltar para câmera'}
+            </Text>
+          </TouchableOpacity>
 
           <Animated.View style={[styles.manualBox, animStyle]}>
             <View style={styles.manualHeader}>
