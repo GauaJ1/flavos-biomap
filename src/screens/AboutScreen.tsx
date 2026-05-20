@@ -19,6 +19,10 @@ export const AboutScreen = () => {
     Linking.openURL('https://instagram.com/flavoscompany');
   };
 
+  const handleOpenWebsite = () => {
+    Linking.openURL('https://flavoscompany.xyz');
+  };
+
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Animated.View style={[styles.header, s1Style]}>
@@ -63,12 +67,21 @@ export const AboutScreen = () => {
       <Animated.View style={[styles.section, s3Style]}>
         <SectionTitle title="Realização" />
         <Text style={styles.paragraph}>
-          Este projeto foi idealizado e concebido pela <Text style={styles.bold}>Flavos Company</Text>, sob as diretrizes do ecossistema <Text style={styles.bold}>The Digital Observatory</Text>. Pautada pela filosofia de design <Text style={styles.italicText}>Luminous Obsidian</Text> e sob a premissa de <Text style={styles.italicText}>"Mais autonomia. Menos atrito."</Text>, a Flavos une engenharia leve, tecnologia sustentável e design premium para criar soluções digitais que reduzem o atrito no cotidiano.
+          O <Text style={styles.bold}>Flavos BioMap</Text> é uma iniciativa concebida e desenvolvida pela <Text style={styles.bold}>Flavos Company</Text>. Somos uma organização focada no desenvolvimento de aplicações digitais modernas, com atenção especial a produto, design e experiência do usuário.
         </Text>
-        <TouchableOpacity style={styles.instagramButton} onPress={handleOpenInstagram}>
-          <Feather name="instagram" size={18} color="#FFF" />
-          <Text style={styles.instagramButtonText}>Siga @flavoscompany</Text>
-        </TouchableOpacity>
+        <Text style={styles.paragraph}>
+          Com o compromisso de criar soluções simples, úteis e acessíveis, desenvolvemos este projeto para conectar os consumidores às histórias, territórios e comunidades que dão vida à sociobiodiversidade brasileira.
+        </Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.websiteButton} onPress={handleOpenWebsite}>
+            <Feather name="globe" size={16} color="#FFF" />
+            <Text style={styles.buttonText}>Visitar Website</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.instagramButton} onPress={handleOpenInstagram}>
+            <Feather name="instagram" size={16} color="#FFF" />
+            <Text style={styles.buttonText}>Siga @flavoscompany</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
     </ScrollView>
   );
@@ -153,22 +166,37 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontStyle: 'italic',
   },
-  instagramButton: {
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  websiteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
     borderRadius: 16,
-    gap: 8,
-    marginTop: 8,
-    alignSelf: 'flex-start',
+    gap: 6,
     ...SHADOWS.small,
   },
-  instagramButtonText: {
+  instagramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E1306C',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    gap: 6,
+    ...SHADOWS.small,
+  },
+  buttonText: {
     color: '#FFF',
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 14,
   }
 });
