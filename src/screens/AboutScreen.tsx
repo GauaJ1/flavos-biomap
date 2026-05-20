@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { COLORS, SPACING, SHADOWS } from '../constants/colors';
 import { SectionTitle } from '../components/ui/SectionTitle';
 import { useInitialAnimation } from '../hooks/useAnimation';
+import { Feather } from '@expo/vector-icons';
 
 export const AboutScreen = () => {  
   const s1 = useInitialAnimation(100);
@@ -13,6 +14,10 @@ export const AboutScreen = () => {
   const s1Style = useAnimatedStyle(() => ({ opacity: s1.opacity.value, transform: [{ translateY: s1.translateY.value }] }));
   const s2Style = useAnimatedStyle(() => ({ opacity: s2.opacity.value, transform: [{ translateY: s2.translateY.value }] }));
   const s3Style = useAnimatedStyle(() => ({ opacity: s3.opacity.value, transform: [{ translateY: s3.translateY.value }] }));
+
+  const handleOpenInstagram = () => {
+    Linking.openURL('https://instagram.com/flavoscompany');
+  };
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -53,6 +58,17 @@ export const AboutScreen = () => {
         <Text style={styles.paragraph}>
           Use o leitor de QR Code nos produtos físicos da mostra para desvendar seus segredos, conhecer suas origens no mapa e participar do nosso Mural de Saberes.
         </Text>
+      </Animated.View>
+
+      <Animated.View style={[styles.section, s3Style]}>
+        <SectionTitle title="Realização" />
+        <Text style={styles.paragraph}>
+          Este projeto foi idealizado e concebido pela <Text style={styles.bold}>Flavos Company</Text>, sob as diretrizes do ecossistema <Text style={styles.bold}>The Digital Observatory</Text>. Pautada pela filosofia de design <Text style={styles.italicText}>Luminous Obsidian</Text> e sob a premissa de <Text style={styles.italicText}>"Mais autonomia. Menos atrito."</Text>, a Flavos une engenharia leve, tecnologia sustentável e design premium para criar soluções digitais que reduzem o atrito no cotidiano.
+        </Text>
+        <TouchableOpacity style={styles.instagramButton} onPress={handleOpenInstagram}>
+          <Feather name="instagram" size={18} color="#FFF" />
+          <Text style={styles.instagramButtonText}>Siga @flavoscompany</Text>
+        </TouchableOpacity>
       </Animated.View>
     </ScrollView>
   );
@@ -116,6 +132,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  italicText: {
+    fontStyle: 'italic',
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
   highlightBox: {
     backgroundColor: '#F4F1EA',
     padding: 24,
@@ -131,5 +152,23 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     lineHeight: 28,
     fontStyle: 'italic',
+  },
+  instagramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 16,
+    gap: 8,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    ...SHADOWS.small,
+  },
+  instagramButtonText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 15,
   }
 });
