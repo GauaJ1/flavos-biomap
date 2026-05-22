@@ -28,10 +28,9 @@ export const useSlideUp = ({ delay = 0, from = 30 }: Options = {}) => {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      translateY.value = withSpring(0, {
-        damping: 14,
-        stiffness: 120,
-        mass: 0.8,
+      translateY.value = withTiming(0, {
+        duration: 500,
+        easing: Easing.bezier(0.25, 1, 0.5, 1),
       });
     }, delay);
     return () => clearTimeout(timeout);
@@ -42,12 +41,12 @@ export const useSlideUp = ({ delay = 0, from = 30 }: Options = {}) => {
 
 export const useInitialAnimation = (delay: number = 0) => {
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+  const translateY = useSharedValue(25);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.cubic) });
-      translateY.value = withSpring(0, { damping: 15, stiffness: 100 });
+      opacity.value = withTiming(1, { duration: 650, easing: Easing.bezier(0.25, 1, 0.5, 1) });
+      translateY.value = withTiming(0, { duration: 650, easing: Easing.bezier(0.25, 1, 0.5, 1) });
     }, delay);
     return () => clearTimeout(timeout);
   }, []);

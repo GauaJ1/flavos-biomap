@@ -7,4 +7,5 @@ export type RootStackParamList = {
   ProductDetails: { productSlug: string };
   Community: { communityId: string, communityData?: Community };
   About: undefined;
+  BiomeMap: undefined;
 };

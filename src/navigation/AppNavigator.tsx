@@ -11,12 +11,13 @@ const linking = {
   ],
   config: {
     screens: {
-      Home: '',
       QRScanner: 'scan',
       Products: 'products',
       ProductDetails: 'product/:productSlug',
       Community: 'community/:communityId',
       About: 'about',
+      BiomeMap: 'biomap',
+      Home: '*', // Fallback wildcard redirects unmatched paths to Home
     },
   },
 };

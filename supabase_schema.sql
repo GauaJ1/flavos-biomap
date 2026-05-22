@@ -23,6 +23,7 @@ CREATE TABLE public.products (
   description text NOT NULL,
   sustainable_importance text NOT NULL,
   traditional_knowledge text NOT NULL,
+  curiosity_clue text,
   state text NOT NULL,
   region text NOT NULL,
   biome text NOT NULL,
@@ -56,13 +57,13 @@ CREATE TABLE public.comments (
 -- Inserindo Comunidades
 INSERT INTO public.communities (id, name, description, location_name, latitude, longitude, image_url) VALUES 
 ('c1000000-0000-0000-0000-000000000001', 'Cooperativa Extrativista da Amazônia', 'Comunidade ribeirinha que vive da coleta sustentável...', 'Reserva Tapajós - Pará', -3.4653, -55.2159, 'https://images.unsplash.com/photo-1518182170546-076616fd42bf?q=80&w=800'),
-('c2000000-0000-0000-0000-000000000002', 'Mulheres do Sertão Produtivo', 'Cooperativa formada por mulheres camponesas...', 'Sertão do São Francisco - Bahia', -9.8450, -40.1012, 'https://images.unsplash.com/photo-1596773539958-38ce518903e1?q=80&w=800'),
+('c2000000-0000-0000-0000-000000000002', 'Mulheres do Sertão Produtivo', 'Comunidade formada por mulheres camponesas...', 'Sertão do São Francisco - Bahia', -9.8450, -40.1012, 'https://images.unsplash.com/photo-1596773539958-38ce518903e1?q=80&w=800'),
 ('c3000000-0000-0000-0000-000000000003', 'Associação de Catação do Cerrado', 'Famílias geraizeiras que coletam frutos do Cerrado...', 'Norte de Minas Gerais', -15.8267, -45.8601, 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=800');
 
 -- Inserindo Produtos
-INSERT INTO public.products (id, community_id, name, description, sustainable_importance, traditional_knowledge, state, region, biome, latitude, longitude, image_url) VALUES 
-('11000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'Óleo de Andiroba', 'Um óleo com propriedades cicatrizantes...', 'Colheita feita sustentavelmente do chão...', 'Usado secularmente pelos ribeirinhos...', 'Pará', 'Norte', 'Amazônia', -3.4653, -55.2159, 'https://images.unsplash.com/photo-1611078482436-e0f317415494?q=80&w=800'),
-('22000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', 'Geleia de Umbu', 'Doce artesanal feito da fruta ácida...', 'Garante renda para mulheres do sertão...', 'As raízes do umbuzeiro armazenam...', 'Bahia', 'Nordeste', 'Caatinga', -9.8450, -40.1012, 'https://images.unsplash.com/photo-1582293041079-7814c2f122bf?q=80&w=800');
+INSERT INTO public.products (id, community_id, name, description, sustainable_importance, traditional_knowledge, curiosity_clue, state, region, biome, latitude, longitude, image_url) VALUES 
+('11000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001', 'Óleo de Andiroba', 'Um óleo com propriedades cicatrizantes...', 'Colheita feita sustentavelmente do chão...', 'Usado secularmente pelos ribeirinhos...', 'Este óleo vem de uma árvore cujas sementes flutuam nos rios da Amazônia e é usado tradicionalmente como repelente e cicatrizante natural.', 'Pará', 'Norte', 'Amazônia', -3.4653, -55.2159, 'https://images.unsplash.com/photo-1611078482436-e0f317415494?q=80&w=800'),
+('22000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000002', 'Geleia de Umbu', 'Doce artesanal feito da fruta ácida...', 'Garante renda para mulheres do sertão...', 'As raízes do umbuzeiro armazenam...', 'Este doce é feito de um fruto cuja árvore é conhecida como a "árvore que dá de beber", devido à sua capacidade de reter água nas raízes.', 'Bahia', 'Nordeste', 'Caatinga', -9.8450, -40.1012, 'https://images.unsplash.com/photo-1582293041079-7814c2f122bf?q=80&w=800');
 
 -- Inserindo Curtidas Iniciais
 INSERT INTO public.likes (product_id, count) VALUES 

@@ -6,6 +6,7 @@ export interface Product {
   image_url: string;
   sustainable_importance: string;
   traditional_knowledge: string;
+  curiosity_clue: string;
   community_id: string;
   state: string;
   region: string;

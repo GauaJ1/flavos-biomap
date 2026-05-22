@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, useAnimatedScrollHandler, interpolate, Extrapolate, withTiming, withSpring, Easing } from 'react-native-reanimated';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, useAnimatedScrollHandler, interpolate, Extrapolate, withTiming, withSpring, Easing, runOnJS } from 'react-native-reanimated';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
@@ -30,18 +30,30 @@ export const ProductDetailsScreen = () => {
   const navigation = useNavigation<NavigationProps>();
   const { productSlug } = route.params;
 
-  const [product, setProduct] = React.useState<Product | null>(null);
-  const [community, setCommunity] = React.useState<Community | null>(null);
-  const [loadingDetails, setLoadingDetails] = React.useState(true);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [community, setCommunity] = useState<Community | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
-  // Mural State (Supabase Integração)
-  const [comments, setComments] = React.useState<Comment[]>([]);
-  const [likes, setLikes] = React.useState(0); 
-  const [isLiked, setIsLiked] = React.useState(false);
-  const [loadingMural, setLoadingMural] = React.useState(true);
+  // Discovery Game Hook State
+  const [hasRevealed, setHasRevealed] = useState(false);
+  const [hookUnmounted, setHookUnmounted] = useState(false);
 
-  // Busca os Produtos e a Comunidade
-  React.useEffect(() => {
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'history' | 'producer' | 'impact'>('history');
+
+  // Mural State
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [likes, setLikes] = useState(0); 
+  const [isLiked, setIsLiked] = useState(false);
+  const [loadingMural, setLoadingMural] = useState(true);
+
+  // Animations values
+  const hookOpacity = useSharedValue(1);
+  const detailsOpacity = useSharedValue(0);
+  const detailsScale = useSharedValue(0.95);
+
+  // Fetch Details
+  useEffect(() => {
     const fetchDetails = async () => {
       setLoadingDetails(true);
       const fetchedProduct = await ProductsAPI.getProductBySlug(productSlug);
@@ -55,13 +67,12 @@ export const ProductDetailsScreen = () => {
     fetchDetails();
   }, [productSlug]);
 
-  // Busca o Mural apenas se o Produto já carregou
-  React.useEffect(() => {
+  // Fetch Mural Data
+  useEffect(() => {
     if (!product) return;
     const fetchMuralData = async () => {
       setLoadingMural(true);
       
-      // Verifica se o usuário já curtiu
       const localLiked = await AsyncStorage.getItem(`@liked_${product.id}`);
       if (localLiked === 'true') {
         setIsLiked(true);
@@ -78,20 +89,42 @@ export const ProductDetailsScreen = () => {
     fetchMuralData();
   }, [product]);
 
+  const handleReveal = () => {
+    // Fade out and scale down the hook wrapper softly
+    hookOpacity.value = withTiming(0, { 
+      duration: 500,
+      easing: Easing.bezier(0.25, 1, 0.5, 1)
+    }, (finished) => {
+      if (finished) {
+        runOnJS(setHookUnmounted)(true);
+      }
+    });
+    setHasRevealed(true);
+    
+    // Smooth cross-fade to details with ease-out timing curve
+    detailsOpacity.value = withTiming(1, { 
+      duration: 650,
+      easing: Easing.bezier(0.25, 1, 0.5, 1)
+    });
+    detailsScale.value = withTiming(1, { 
+      duration: 650,
+      easing: Easing.bezier(0.25, 1, 0.5, 1)
+    });
+  };
+
   const handleToggleLike = async () => {
     if (!product) return;
     const isLiking = !isLiked;
     setIsLiked(isLiking);
-    setLikes(likes + (isLiking ? 1 : -1)); // Optimistic UI update
+    setLikes(likes + (isLiking ? 1 : -1));
     
-    // Salva no dispositivo 
     if (isLiking) {
       await AsyncStorage.setItem(`@liked_${product.id}`, 'true');
     } else {
       await AsyncStorage.removeItem(`@liked_${product.id}`);
     }
 
-    await LikesAPI.toggleLike(product.id, isLiking); // Sincroniza via RPC
+    await LikesAPI.toggleLike(product.id, isLiking);
   };
 
   const handleAddComment = async (text: string, authorName: string) => {
@@ -125,164 +158,262 @@ export const ProductDetailsScreen = () => {
     };
   });
 
-  // Staggered Section Animations
-  const section1 = useInitialAnimation(100);
-  const section2 = useInitialAnimation(200);
-  const section3 = useInitialAnimation(300);
-  const section4 = useInitialAnimation(400);
+  const hookAnimStyle = useAnimatedStyle(() => ({
+    opacity: hookOpacity.value,
+    transform: [{ scale: interpolate(hookOpacity.value, [1, 0], [1, 0.9]) }]
+  }));
 
-  const s1Style = useAnimatedStyle(() => ({ opacity: section1.opacity.value, transform: [{ translateY: section1.translateY.value }] }));
-  const s2Style = useAnimatedStyle(() => ({ opacity: section2.opacity.value, transform: [{ translateY: section2.translateY.value }] }));
-  const s3Style = useAnimatedStyle(() => ({ opacity: section3.opacity.value, transform: [{ translateY: section3.translateY.value }] }));
-  const s4Style = useAnimatedStyle(() => ({ opacity: section4.opacity.value, transform: [{ translateY: section4.translateY.value }] }));
+  const detailsAnimStyle = useAnimatedStyle(() => ({
+    opacity: detailsOpacity.value,
+    transform: [{ scale: detailsScale.value }]
+  }));
 
+  // Biome-specific custom styling helper
+  const getBiomeColor = (biome: string) => {
+    switch (biome.toLowerCase()) {
+      case 'amazônia': return '#2E7D32';
+      case 'cerrado': return '#E65100';
+      case 'caatinga': return '#8D6E63';
+      case 'mata atlântica': return '#00897B';
+      default: return COLORS.primary;
+    }
+  };
+
+  const currentBiomeColor = product ? getBiomeColor(product.biome) : COLORS.primary;
+
+  if (loadingDetails) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Conectando ao rastro da floresta...</Text>
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Feather name="alert-circle" size={48} color={COLORS.secondary} style={{ marginBottom: 16 }} />
+        <Text style={[styles.loadingText, { color: COLORS.primary, fontSize: 18, fontWeight: '700' }]}>
+          Produto não encontrado!
+        </Text>
+        <Text style={[styles.loadingText, { textAlign: 'center', marginHorizontal: 32 }]}>
+          O QR Code escaneado não corresponde a nenhum produto no nosso catálogo da sociobiodiversidade.
+        </Text>
+        <AppButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: 24 }} />
+      </View>
+    );
+  }
+
+  // PHASE 2: Main Details View with Card Tabs & Mural + Overlay
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <Animated.ScrollView 
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={styles.container}
+        scrollEnabled={hasRevealed}
       >
-        {loadingDetails ? (
-          <View style={styles.loadingContainer}>
-             <Text style={styles.loadingText}>Carregando produto da sociobiodiversidade...</Text>
-          </View>
-        ) : !product ? (
-          <View style={styles.loadingContainer}>
-             <Feather name="alert-circle" size={48} color={COLORS.secondary} style={{ marginBottom: 16 }} />
-             <Text style={[styles.loadingText, { color: COLORS.primary, fontSize: 18, fontWeight: '700' }]}>Produto não encontrado!</Text>
-             <Text style={[styles.loadingText, { textAlign: 'center', marginHorizontal: 32 }]}>O QR Code escaneado não corresponde a nenhum produto no banco de dados.</Text>
-             <AppButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: 24 }} />
-          </View>
-        ) : (
-          <>
-            {/* Imagem Principal com Parallax */}
-            <View style={styles.imageWrapper}>
-              <Animated.View style={[styles.imageContainer, imageAnimStyle]}>
-                {product.image_url ? (
-                  <Image source={{ uri: product.image_url }} style={styles.image} />
-                ) : (
-                  <View style={styles.imagePlaceholder}>
-                    <Feather name="image" size={40} color={COLORS.secondary} />
-                  </View>
-                )}
-              </Animated.View>
+        {/* Parallax Image Banner */}
+        <View style={styles.imageWrapper}>
+          <Animated.View style={[styles.imageContainer, imageAnimStyle]}>
+            {product.image_url ? (
+              <Image source={{ uri: product.image_url }} style={styles.image} />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Feather name="image" size={40} color={COLORS.secondary} />
+              </View>
+            )}
+          </Animated.View>
+        </View>
+
+        {/* Content Panel */}
+        <Animated.View style={[styles.content, detailsAnimStyle]}>
+          {/* Header section (Revealed instantly) */}
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{product.name}</Text>
+              <Text style={styles.locationSubtitle}>📍 {product.state} • {product.region}</Text>
             </View>
+            <View style={[styles.biomeTag, { backgroundColor: currentBiomeColor + '15' }]}>
+              <Text style={[styles.biomeText, { color: currentBiomeColor }]}>{product.biome}</Text>
+            </View>
+          </View>
 
-            <View style={styles.content}>
-              {/* Cabeçalho */}
-              <Animated.View style={[styles.header, s1Style]}>
-                <Text style={styles.title}>{product.name}</Text>
-                <View style={styles.biomeTag}>
-                  <Text style={styles.biomeText}>{product.biome}</Text>
-                </View>
-              </Animated.View>
+          {/* Cards Tab Selector */}
+          <View style={styles.tabSelector}>
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'history' && { backgroundColor: currentBiomeColor, borderColor: 'transparent' }
+              ]}
+              onPress={() => setActiveTab('history')}
+            >
+              <Feather name="book-open" size={14} color={activeTab === 'history' ? '#FFF' : COLORS.lightText} />
+              <Text style={[styles.tabButtonText, activeTab === 'history' && styles.tabButtonTextActive]}>História</Text>
+            </TouchableOpacity>
 
-              <Animated.Text style={[styles.description, s1Style]}>{product.description}</Animated.Text>
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'producer' && { backgroundColor: currentBiomeColor, borderColor: 'transparent' }
+              ]}
+              onPress={() => setActiveTab('producer')}
+            >
+              <Feather name="users" size={14} color={activeTab === 'producer' ? '#FFF' : COLORS.lightText} />
+              <Text style={[styles.tabButtonText, activeTab === 'producer' && styles.tabButtonTextActive]}>Produtor</Text>
+            </TouchableOpacity>
 
-              {/* Card de Comunidade */}
-              {community && (
-                <Animated.View style={s2Style}>
-                  <TouchableOpacity 
-                    style={styles.communityCard}
-                    onPress={() => navigation.navigate('Community', { communityId: community.id })}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.communityInfo}>
-                      <Text style={styles.communityLabel}>Origem Produtora</Text>
-                      <Text style={styles.communityName}>{community.name}</Text>
-                      <Text style={styles.communityLocation}>📍 {community.location_name}</Text>
-                    </View>
-                    <Feather name="chevron-right" size={24} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
+            <TouchableOpacity 
+              style={[
+                styles.tabButton, 
+                activeTab === 'impact' && { backgroundColor: currentBiomeColor, borderColor: 'transparent' }
+              ]}
+              onPress={() => setActiveTab('impact')}
+            >
+              <Feather name="activity" size={14} color={activeTab === 'impact' ? '#FFF' : COLORS.lightText} />
+              <Text style={[styles.tabButtonText, activeTab === 'impact' && styles.tabButtonTextActive]}>Impacto</Text>
+            </TouchableOpacity>
+          </View>
 
-              {/* Badges Info */}
-              <Animated.View style={s2Style}>
-                <InfoBadge 
-                  icon="globe" 
-                  title="Importância Sustentável" 
-                  text={product.sustainable_importance} 
-                  variant="green"
-                />
-
-                <InfoBadge 
-                  icon="book-open" 
-                  title="Saber Tradicional" 
-                  text={product.traditional_knowledge} 
-                  variant="yellow"
-                />
-              </Animated.View>
-
-              {/* Origem Territorial */}
-              <Animated.View style={[styles.futureArea, s3Style]}>
-                <Text style={styles.futureTitle}>Origem do Produto</Text>
+          {/* Card/Tab Content */}
+          <View style={styles.tabContentContainer}>
+            {activeTab === 'history' && (
+              <View style={styles.tabPane}>
+                <Text style={styles.sectionHeading}>O que é o produto?</Text>
+                <Text style={styles.bodyText}>{product.description}</Text>
                 
-                <View style={styles.originInfoContainer}>
-                  <View style={styles.originInfoItem}>
-                    <Text style={styles.originInfoLabel}>Bioma</Text>
-                    <Text style={styles.originInfoValue}>{product.biome}</Text>
-                  </View>
-                  <View style={styles.originInfoItem}>
-                    <Text style={styles.originInfoLabel}>Estado</Text>
-                    <Text style={styles.originInfoValue}>{product.state}</Text>
-                  </View>
-                  <View style={styles.originInfoItem}>
-                    <Text style={styles.originInfoLabel}>Região</Text>
-                    <Text style={styles.originInfoValue}>{product.region}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.mapContainer}>
-                   {product.latitude && product.longitude ? (
-                     <OriginMap latitude={product.latitude} longitude={product.longitude} />
-                   ) : (
-                     <View style={styles.mapFallback}>
-                       <Feather name="map" size={32} color={COLORS.secondary} />
-                       <Text style={styles.mapText}>Localização indisponível</Text>
-                     </View>
-                   )}
-                </View>
-              </Animated.View>
-
-              {/* Mural de Saberes */}
-              <Animated.View style={[styles.muralSection, s4Style]}>
-                <View style={styles.muralHeader}>
-                  <View>
-                    <Text style={styles.futureTitle}>Mural de Saberes</Text>
-                    <Text style={styles.muralSubtitle}>Compartilhe suas memórias ou dúvidas sobre este produto.</Text>
-                  </View>
-                  <LikeButton 
-                    count={likes} 
-                    isLiked={isLiked} 
-                    onToggle={handleToggleLike} 
-                  />
-                </View>
+                <View style={styles.knowledgeDivider} />
                 
-                <View style={styles.muralInputContainer}>
-                  <CommentInput onSubmit={handleAddComment} />
-                </View>
+                <Text style={styles.sectionHeading}>Saber Tradicional & Produção</Text>
+                <Text style={[styles.bodyText, styles.italicText]}>{product.traditional_knowledge}</Text>
+              </View>
+            )}
 
-                <View style={styles.commentsList}>
-                  {loadingMural ? (
-                    <Text style={styles.noCommentsText}>Carregando saberes...</Text>
-                  ) : (
-                    <>
-                      {comments.map(comment => (
-                        <CommentCard key={comment.id} comment={comment} />
-                      ))}
-                      {comments.length === 0 && (
-                        <Text style={styles.noCommentsText}>Seja o primeiro a deixar um saber!</Text>
+            {activeTab === 'producer' && (
+              <View style={styles.tabPane}>
+                {community ? (
+                  <>
+                    <TouchableOpacity 
+                      style={styles.communityProfileCard}
+                      onPress={() => navigation.navigate('Community', { communityId: community.id })}
+                      activeOpacity={0.9}
+                    >
+                      <View style={styles.communityRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.communityLabel}>Comunidade Guardiã</Text>
+                          <Text style={styles.communityName}>{community.name}</Text>
+                          <Text style={styles.communityLocation}>📍 {community.location_name}</Text>
+                        </View>
+                        <Feather name="arrow-right-circle" size={24} color={currentBiomeColor} />
+                      </View>
+                      <Text style={styles.communityMiniDesc} numberOfLines={3}>
+                        {community.description}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.sectionHeading}>Localização no Território</Text>
+                    <View style={styles.mapContainer}>
+                      {product.latitude && product.longitude ? (
+                        <OriginMap latitude={product.latitude} longitude={product.longitude} />
+                      ) : (
+                        <View style={styles.mapFallback}>
+                          <Feather name="map" size={32} color={COLORS.secondary} />
+                          <Text style={styles.mapText}>Coordenadas não cadastradas</Text>
+                        </View>
                       )}
-                    </>
-                  )}
+                    </View>
+                  </>
+                ) : (
+                  <Text style={styles.bodyText}>Informações da comunidade indisponíveis para este produto.</Text>
+                )}
+              </View>
+            )}
+
+            {activeTab === 'impact' && (
+              <View style={styles.tabPane}>
+                <Text style={styles.sectionHeading}>Importância Sustentável</Text>
+                <Text style={styles.bodyText}>{product.sustainable_importance}</Text>
+                
+                <View style={styles.impactHighlightBox}>
+                  <Feather name="shield" size={20} color={COLORS.primary} style={{ marginTop: 2 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.impactHighlightTitle}>Conservação Ativa</Text>
+                    <Text style={styles.impactHighlightDesc}>
+                      Ao adquirir produtos deste bioma ({product.biome}), você incentiva diretamente a conservação da biodiversidade nacional e protege florestas de pé.
+                    </Text>
+                  </View>
                 </View>
-              </Animated.View>
+              </View>
+            )}
+          </View>
+
+          {/* Mural de Saberes Section */}
+          <View style={styles.muralSection}>
+            <View style={styles.muralHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.muralTitle}>Mural de Saberes</Text>
+                <Text style={styles.muralSubtitle}>Compartilhe suas memórias ou deixe uma mensagem.</Text>
+              </View>
+              <LikeButton 
+                count={likes} 
+                isLiked={isLiked} 
+                onToggle={handleToggleLike} 
+              />
             </View>
-          </>
-        )}
+            
+            <View style={styles.muralInputContainer}>
+              <CommentInput onSubmit={handleAddComment} />
+            </View>
+
+            <View style={styles.commentsList}>
+              {loadingMural ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : (
+                <>
+                  {comments.map(comment => (
+                    <CommentCard key={comment.id} comment={comment} />
+                  ))}
+                  {comments.length === 0 && (
+                    <Text style={styles.noCommentsText}>Seja o primeiro a deixar um saber no mural!</Text>
+                  )}
+                </>
+              )}
+            </View>
+          </View>
+        </Animated.View>
       </Animated.ScrollView>
+
+      {/* PHASE 1: Hook / Curiosity Challenge Overlay */}
+      {!hookUnmounted && (
+        <Animated.View 
+          style={[styles.hookWrapper, hookAnimStyle]} 
+          pointerEvents={hasRevealed ? 'none' : 'auto'}
+        >
+          <Animated.View style={styles.hookContainer}>
+            <View style={styles.hookHeader}>
+              <Feather name="help-circle" size={40} color={COLORS.secondary} />
+              <Text style={styles.hookTitle}>Você sabe de onde veio este produto antes de chegar aqui?</Text>
+            </View>
+            
+            <View style={styles.hookCuriosityCard}>
+              <Text style={styles.hookCuriosityLabel}>PISTA DO PRODUTOR</Text>
+              <Text style={styles.hookCuriosityText}>
+                {product.curiosity_clue ? product.curiosity_clue : (product.traditional_knowledge ? product.traditional_knowledge.substring(0, 180) + '...' : 'Este produto carrega segredos ancestrais de um bioma brasileiro e o suor de uma comunidade guardiã da floresta.')}
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.revealButton, { backgroundColor: currentBiomeColor }]} 
+              onPress={handleReveal}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.revealButtonText}>DESCOBRIR A ORIGEM</Text>
+              <Feather name="arrow-right" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -297,15 +428,85 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 300,
+    backgroundColor: COLORS.background,
+    minHeight: 350,
   },
   loadingText: {
     marginTop: 20,
     color: COLORS.secondary,
     fontWeight: '600',
+    fontSize: 15,
+  },
+  hookWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 999,
+  },
+  hookContainer: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: COLORS.surface,
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: '#ECEAE0',
+    alignItems: 'center',
+    gap: 24,
+    ...SHADOWS.large,
+  },
+  hookHeader: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  hookTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: COLORS.primary,
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  hookCuriosityCard: {
+    backgroundColor: '#FAF8F5',
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ECEAE0',
+    width: '100%',
+  },
+  hookCuriosityLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.secondary,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  hookCuriosityText: {
+    fontSize: 14,
+    color: COLORS.text,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  revealButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 18,
+    ...SHADOWS.medium,
+  },
+  revealButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   imageWrapper: {
-    height: 300,
+    height: 280,
     width: '100%',
     overflow: 'hidden',
     backgroundColor: '#F4F1EA',
@@ -337,104 +538,127 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 20,
+    gap: 12,
   },
   title: {
-    flex: 1,
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: '900',
     color: COLORS.primary,
-    marginRight: 16,
     lineHeight: 32,
   },
+  locationSubtitle: {
+    fontSize: 13,
+    color: COLORS.lightText,
+    marginTop: 4,
+    fontWeight: '600',
+  },
   biomeTag: {
-    backgroundColor: '#E8F5E9',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    marginTop: 4,
+    alignSelf: 'flex-start',
   },
   biomeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
+    fontSize: 11,
+    fontWeight: '800',
     textTransform: 'uppercase',
   },
-  description: {
-    fontSize: 16,
-    color: COLORS.text,
-    lineHeight: 24,
+  tabSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#F4F1EA',
+    borderRadius: 16,
+    padding: 4,
     marginBottom: 24,
+    gap: 4,
   },
-  communityCard: {
+  tabButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F4F1EA',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  communityInfo: {
-    flex: 1,
+  tabButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.lightText,
+  },
+  tabButtonTextActive: {
+    color: '#FFF',
+  },
+  tabContentContainer: {
+    minHeight: 180,
+  },
+  tabPane: {
+    gap: 14,
+  },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  bodyText: {
+    fontSize: 15,
+    color: COLORS.text,
+    lineHeight: 22,
+  },
+  italicText: {
+    fontStyle: 'italic',
+    color: COLORS.text,
+  },
+  knowledgeDivider: {
+    height: 1,
+    backgroundColor: '#EBE6DF',
+    marginVertical: 4,
+  },
+  communityProfileCard: {
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#ECEAE0',
+    borderRadius: 20,
+    padding: 16,
+    gap: 12,
+    ...SHADOWS.small,
+  },
+  communityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   communityLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
     color: COLORS.secondary,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   communityName: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.primary,
-    marginBottom: 4,
   },
   communityLocation: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.lightText,
+    marginTop: 2,
   },
-  futureArea: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  futureTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.primary,
-    marginBottom: 12,
-  },
-  originInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#F4F1EA',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  originInfoItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  originInfoLabel: {
-    fontSize: 12,
-    color: COLORS.lightText,
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  originInfoValue: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '700',
-    textAlign: 'center',
+  communityMiniDesc: {
+    fontSize: 13,
+    color: COLORS.text,
+    lineHeight: 18,
   },
   mapContainer: {
-    height: 200,
+    height: 180,
     backgroundColor: '#EBE6DF',
     borderRadius: 20,
     overflow: 'hidden',
-    ...SHADOWS.medium,
+    marginTop: 8,
+    ...SHADOWS.small,
   },
   mapFallback: {
     ...StyleSheet.absoluteFillObject,
@@ -450,8 +674,27 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     fontWeight: '600',
   },
+  impactHighlightBox: {
+    flexDirection: 'row',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    marginTop: 8,
+  },
+  impactHighlightTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  impactHighlightDesc: {
+    fontSize: 13,
+    color: COLORS.text,
+    lineHeight: 18,
+  },
   muralSection: {
-    marginTop: 16,
+    marginTop: 32,
     paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: '#EBE6DF',
@@ -462,17 +705,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 16,
   },
+  muralTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
   muralSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.lightText,
     marginTop: 4,
-    maxWidth: '80%',
   },
   muralInputContainer: {
     marginBottom: 20,
   },
   commentsList: {
     marginTop: 8,
+    gap: 12,
   },
   noCommentsText: {
     fontSize: 14,

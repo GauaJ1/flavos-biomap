@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   description text NOT NULL,
   sustainable_importance text NOT NULL,
   traditional_knowledge text NOT NULL,
+  curiosity_clue text,
   state text NOT NULL,
   region text NOT NULL,
   biome text NOT NULL,

@@ -34,24 +34,32 @@ export const HomeScreen = () => {
           <Text style={styles.logoBadgeText}>MOSTRA CULTURAL</Text>
         </View>
         <Text style={styles.title}>Flavos BioMap</Text>
-        <Text style={styles.subtitle}>O rastro da floresta</Text>
+        <Text style={styles.subtitle}>O Rastro da Floresta</Text>
         <Text style={styles.body}>
-          Conecte-se com a origem social, cultural e biológica dos produtos da sociobiodiversidade brasileira. Escaneie, explore e preserve.
+          Escaneie um produto e descubra sua origem, seu bioma e a comunidade por trás dele.
         </Text>
       </Animated.View>
 
       <Animated.View style={[styles.actions, actionsStyle]}>
         <AppButton 
-          title="Escanear Produto" 
+          title="Escanear QR Code" 
           icon="maximize" 
           onPress={() => navigation.navigate('QRScanner')} 
           style={styles.scanButton}
         />
         <AppButton 
-          title="Explorar Catálogo" 
+          title="Explorar Produtos" 
           icon="grid" 
           type="outline" 
+          style={styles.actionButton}
           onPress={() => navigation.navigate('Products')} 
+        />
+        <AppButton 
+          title="Ver Mapa dos Biomas" 
+          icon="map" 
+          type="outline" 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('BiomeMap')} 
         />
         <AppButton 
           title="Sobre o Projeto" 
@@ -109,6 +117,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   scanButton: {
+    marginBottom: 16,
+  },
+  actionButton: {
     marginBottom: 16,
   },
   aboutButton: {

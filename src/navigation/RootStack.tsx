@@ -6,6 +6,7 @@ import { ProductDetailsScreen } from '../screens/ProductDetailsScreen';
 import { QRScannerScreen } from '../screens/QRScannerScreen';
 import { CommunityScreen } from '../screens/CommunityScreen';
 import { AboutScreen } from '../screens/AboutScreen';
+import { BiomeMapScreen } from '../screens/BiomeMapScreen';
 import { RootStackParamList } from './types';
 import { COLORS } from '../constants/colors';
 
@@ -29,6 +30,7 @@ export const RootStack = () => {
       <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} options={{ title: '' }} />
       <Stack.Screen name="Community" component={CommunityScreen} options={{ title: '' }} />
       <Stack.Screen name="About" component={AboutScreen} options={{ title: 'Sobre o Projeto' }} />
+      <Stack.Screen name="BiomeMap" component={BiomeMapScreen} options={{ title: 'Mapa Vivo' }} />
     </Stack.Navigator>
   );
 };
