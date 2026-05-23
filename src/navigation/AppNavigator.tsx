@@ -17,6 +17,8 @@ const linking = {
       Community: 'community/:communityId',
       About: 'about',
       BiomeMap: 'biomap',
+      SuggestProduct: 'suggest',
+      TrackSuggestion: 'track',
       Home: '*', // Fallback wildcard redirects unmatched paths to Home
     },
   },

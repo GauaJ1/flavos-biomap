@@ -62,6 +62,20 @@ export const HomeScreen = () => {
           onPress={() => navigation.navigate('BiomeMap')} 
         />
         <AppButton 
+          title="Sugerir um Produto" 
+          icon="plus-circle" 
+          type="secondary" 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('SuggestProduct')} 
+        />
+        <AppButton 
+          title="Acompanhar Sugestão" 
+          icon="search" 
+          type="outline" 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('TrackSuggestion')} 
+        />
+        <AppButton 
           title="Sobre o Projeto" 
           icon="info" 
           type="outline" 

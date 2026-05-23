@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { Like } from '../types/like';
 
 export const LikesAPI = {
-  // Busca a contagem de curtidas do produto. Se não existir o registro, tenta criar.
+  // Busca a contagem de curtidas do produto. Se não existir o registro, retorna 0.
   async getLikesByProductId(productId: string): Promise<number> {
     const { data, error } = await supabase
       .from('likes')
@@ -11,9 +11,8 @@ export const LikesAPI = {
       .single();
 
     if (error) {
-      // Se deu erro porque não existe (PGRST116), vamos criar o registro do zero.
+      // Se deu erro porque não existe (PGRST116), significa que possui 0 curtidas.
       if (error.code === 'PGRST116') {
-         await this.initializeLikeRecord(productId);
          return 0;
       }
       console.error('Erro ao buscar curtidas:', error.message);
@@ -21,15 +20,6 @@ export const LikesAPI = {
     }
 
     return data?.count || 0;
-  },
-
-  // Inicializa o registro de curtidas se ele não existir
-  async initializeLikeRecord(productId: string) {
-    const { error } = await supabase.rpc('toggle_like', { 
-      p_product_id: productId, 
-      p_increment: 0 
-    });
-    if(error) console.error('Erro ao inicializar curtidas', error);
   },
 
   // Atualiza as curtidas usando a Função SQL Segura (RPC) no servidor

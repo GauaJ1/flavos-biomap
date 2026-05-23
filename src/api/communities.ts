@@ -26,6 +26,10 @@ export const CommunitiesAPI = {
   },
 
   async getCommunityById(id: string): Promise<Community | null> {
+    if (!id || id === 'null' || id === 'undefined') {
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('communities')
       .select('*')

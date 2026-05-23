@@ -7,6 +7,8 @@ import { QRScannerScreen } from '../screens/QRScannerScreen';
 import { CommunityScreen } from '../screens/CommunityScreen';
 import { AboutScreen } from '../screens/AboutScreen';
 import { BiomeMapScreen } from '../screens/BiomeMapScreen';
+import { SuggestProductScreen } from '../screens/SuggestProductScreen';
+import { TrackSuggestionScreen } from '../screens/TrackSuggestionScreen';
 import { RootStackParamList } from './types';
 import { COLORS } from '../constants/colors';
 
@@ -31,6 +33,8 @@ export const RootStack = () => {
       <Stack.Screen name="Community" component={CommunityScreen} options={{ title: '' }} />
       <Stack.Screen name="About" component={AboutScreen} options={{ title: 'Sobre o Projeto' }} />
       <Stack.Screen name="BiomeMap" component={BiomeMapScreen} options={{ title: 'Mapa Vivo' }} />
+      <Stack.Screen name="SuggestProduct" component={SuggestProductScreen} options={{ title: 'Sugerir Produto', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="TrackSuggestion" component={TrackSuggestionScreen} options={{ title: 'Acompanhar Sugestão' }} />
     </Stack.Navigator>
   );
 };

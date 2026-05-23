@@ -8,4 +8,6 @@ export type RootStackParamList = {
   Community: { communityId: string, communityData?: Community };
   About: undefined;
   BiomeMap: undefined;
+  SuggestProduct: undefined;
+  TrackSuggestion: undefined;
 };
