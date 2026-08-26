@@ -1,18 +1,47 @@
 -- =========================================================================
--- BANCO DE DADOS OFICIAL PARA APRESENTAÇÃO - FLAVOS BIOMAP
+-- BANCO DE DADOS OFICIAL E CONSOLIDADO - FLAVOS BIOMAP (APRESENTAÇÃO)
 -- =========================================================================
--- Copie todo este conteúdo e execute no SQL Editor do seu Supabase.
--- Ele garante que a estrutura esteja perfeita, insere 6 comunidades,
--- 8 produtos ricos de vários biomas, curtidas, comentários no mural
--- e 2 sugestões pendentes para a tela de moderação do Admin!
+-- Execute este script completo no SQL Editor do Supabase.
+-- Ele limpa com segurança dados antigos e recarrega todo o catálogo oficial
+-- com 6 comunidades, 8 produtos, curtidas, mural de saberes e sugestões de moderação!
 -- =========================================================================
 
--- 1. GARANTIR COLUNAS ESSENCIAIS
+-- 1. ESTRUTURA E GARANTIA DE COLUNAS
 ALTER TABLE public.communities ADD COLUMN IF NOT EXISTS tags text[];
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS slug text;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS curiosity_clue text;
 
--- 2. INSERÇÃO DE COMUNIDADES DA SOCIOBIODIVERSIDADE
+-- Criar tabela de sugestões de produtos se não existir
+CREATE TABLE IF NOT EXISTS public.product_suggestions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text NOT NULL,
+  description text,
+  biome text NOT NULL,
+  state text NOT NULL,
+  region text NOT NULL,
+  latitude float,
+  longitude float,
+  image_url text,
+  submitter_name text NOT NULL,
+  submitter_contact text,
+  community_name text,
+  sustainable_importance text,
+  traditional_knowledge text,
+  curiosity_clue text,
+  status text DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')),
+  rejection_reason text,
+  reviewed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. LIMPEZA TOTAL SEGURA DE DADOS ANTERIORES
+TRUNCATE TABLE public.comments CASCADE;
+TRUNCATE TABLE public.likes CASCADE;
+TRUNCATE TABLE public.products CASCADE;
+TRUNCATE TABLE public.communities CASCADE;
+TRUNCATE TABLE public.product_suggestions CASCADE;
+
+-- 3. INSERÇÃO DAS 6 COMUNIDADES TRADICIONAIS
 INSERT INTO public.communities (id, name, description, location_name, latitude, longitude, image_url, tags, created_at)
 VALUES 
 (
@@ -22,7 +51,7 @@ VALUES
   'Reserva Tapajós, Belterra - PA',
   -2.6371,
   -54.9392,
-  'https://images.unsplash.com/photo-1518182170546-076616fd42bf?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=800&q=80',
   ARRAY['Ribeirinha', 'Manejo Florestal', 'Amazônia'],
   NOW()
 ),
@@ -33,7 +62,7 @@ VALUES
   'Sertão do São Francisco, Juazeiro - BA',
   -9.4162,
   -40.5033,
-  'https://images.unsplash.com/photo-1596773539958-38ce518903e1?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80',
   ARRAY['Agricultura Familiar', 'Mulheres', 'Caatinga'],
   NOW()
 ),
@@ -44,7 +73,7 @@ VALUES
   'Norte de Minas Gerais, Januária - MG',
   -15.4833,
   -44.3667,
-  'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80',
   ARRAY['Geraizeiros', 'Cerrado', 'Guardiões das Águas'],
   NOW()
 ),
@@ -80,17 +109,9 @@ VALUES
   'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=800&q=80',
   ARRAY['Quebradeiras', 'Babaçu Livre', 'Empoderamento Feminino'],
   NOW()
-)
-ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  location_name = EXCLUDED.location_name,
-  latitude = EXCLUDED.latitude,
-  longitude = EXCLUDED.longitude,
-  image_url = EXCLUDED.image_url,
-  tags = EXCLUDED.tags;
+);
 
--- 3. INSERÇÃO DOS PRODUTOS DA SOCIOBIODIVERSIDADE
+-- 4. INSERÇÃO DOS 8 PRODUTOS DA SOCIOBIODIVERSIDADE
 INSERT INTO public.products (id, slug, name, description, sustainable_importance, traditional_knowledge, curiosity_clue, community_id, state, region, biome, latitude, longitude, image_url, created_at)
 VALUES
 (
@@ -124,7 +145,7 @@ VALUES
   'Caatinga',
   -9.4162,
   -40.5033,
-  'https://images.unsplash.com/photo-1582293041079-7814c2f122bf?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&w=800&q=80',
   NOW()
 ),
 (
@@ -141,7 +162,7 @@ VALUES
   'Mata Atlântica',
   -24.5855,
   -48.5935,
-  'https://images.unsplash.com/photo-1581009137042-c552e4856c7d?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=800&q=80',
   NOW()
 ),
 (
@@ -192,7 +213,7 @@ VALUES
   'Caatinga',
   -9.4162,
   -40.5033,
-  'https://images.unsplash.com/photo-1587049352847-ecdb6f7cb93b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=800&q=80',
   NOW()
 ),
 (
@@ -209,7 +230,7 @@ VALUES
   'Cerrado',
   -4.8833,
   -43.3500,
-  'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=800&q=80',
   NOW()
 ),
 (
@@ -228,23 +249,9 @@ VALUES
   -54.9392,
   'https://images.unsplash.com/photo-1548811579-017cf2a4268b?auto=format&fit=crop&w=800&q=80',
   NOW()
-)
-ON CONFLICT (id) DO UPDATE SET
-  slug = EXCLUDED.slug,
-  name = EXCLUDED.name,
-  description = EXCLUDED.description,
-  sustainable_importance = EXCLUDED.sustainable_importance,
-  traditional_knowledge = EXCLUDED.traditional_knowledge,
-  curiosity_clue = EXCLUDED.curiosity_clue,
-  community_id = EXCLUDED.community_id,
-  state = EXCLUDED.state,
-  region = EXCLUDED.region,
-  biome = EXCLUDED.biome,
-  latitude = EXCLUDED.latitude,
-  longitude = EXCLUDED.longitude,
-  image_url = EXCLUDED.image_url;
+);
 
--- 4. CURTIDAS INICIAIS NO MURAL DE SABERES
+-- 5. CURTIDAS INICIAIS NO MURAL DE SABERES
 INSERT INTO public.likes (product_id, count, created_at) VALUES 
 ('11000000-0000-0000-0000-000000000001', 48, NOW()),
 ('22000000-0000-0000-0000-000000000002', 36, NOW()),
@@ -253,22 +260,9 @@ INSERT INTO public.likes (product_id, count, created_at) VALUES
 ('55000000-0000-0000-0000-000000000005', 29, NOW()),
 ('66000000-0000-0000-0000-000000000006', 64, NOW()),
 ('77000000-0000-0000-0000-000000000007', 22, NOW()),
-('88000000-0000-0000-0000-000000000008', 39, NOW())
-ON CONFLICT (product_id) DO UPDATE SET
-  count = EXCLUDED.count;
+('88000000-0000-0000-0000-000000000008', 39, NOW());
 
--- 5. COMENTÁRIOS NO MURAL DE SABERES (RECARREGAMENTO LIMPO)
-DELETE FROM public.comments WHERE product_id IN (
-  '11000000-0000-0000-0000-000000000001',
-  '22000000-0000-0000-0000-000000000002',
-  '33000000-0000-0000-0000-000000000003',
-  '44000000-0000-0000-0000-000000000004',
-  '55000000-0000-0000-0000-000000000005',
-  '66000000-0000-0000-0000-000000000006',
-  '77000000-0000-0000-0000-000000000007',
-  '88000000-0000-0000-0000-000000000008'
-);
-
+-- 6. COMENTÁRIOS HUMANIZADOS NO MURAL DE SABERES
 INSERT INTO public.comments (product_id, author_name, content, created_at) VALUES 
 ('11000000-0000-0000-0000-000000000001', 'Maria Clara Santos', 'Esse óleo é milagroso para picadas de inseto e dores musculares. Incrível saber que vem do Tapajós!', NOW()),
 ('11000000-0000-0000-0000-000000000001', 'Prof. Thiago Rezende', 'Trabalho lindo de valorização do manejo ribeirinho. A floresta agradece.', NOW()),
@@ -281,9 +275,7 @@ INSERT INTO public.comments (product_id, author_name, content, created_at) VALUE
 ('77000000-0000-0000-0000-000000000007', 'Francisca das Chagas', 'O babaçu é a vida de milhares de quebradeiras de coco. Viva a floresta livre!', NOW()),
 ('88000000-0000-0000-0000-000000000008', 'Chef Rodrigo Oliveira', 'Cacau de várzea puro tem uma complexidade aromática que poucos chocolates industriais alcançam.', NOW());
 
--- 6. SUGESTÕES DE PRODUTOS PENDENTES (PARA DEMONSTRAR A MODERAÇÃO NO ADMIN)
-DELETE FROM public.product_suggestions WHERE submitter_name IN ('Dona Francisca Silva', 'Tiago Ribeiro Mendes');
-
+-- 7. SUGESTÕES DE PRODUTOS PENDENTES (FILA DE MODERAÇÃO NO ADMIN)
 INSERT INTO public.product_suggestions (
   id, name, description, biome, state, region, latitude, longitude, image_url,
   submitter_name, submitter_contact, community_name, sustainable_importance, traditional_knowledge, curiosity_clue,
